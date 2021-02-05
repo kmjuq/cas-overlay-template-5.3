@@ -1,13 +1,6 @@
 #!/bin/bash
 
-
-function copy() {
-	echo -e "Creating configuration directory under /etc/cas"
-	mkdir -p /etc/cas/config
-
-	echo -e "Copying configuration files from etc/cas to /etc/cas"
-	cp -rfv etc/cas/* /etc/cas
-}
+dir_path=`pwd`
 
 function help() {
 	echo "Usage: build.sh [copy|clean|package|run|debug|bootrun|gencert]"
@@ -94,9 +87,6 @@ function getview() {
 
 
 function gencert() {
-	if [[ ! -d /etc/cas ]] ; then
-		copy
-	fi
 	which keytool
 	if [[ $? -ne 0 ]] ; then
 		echo Error: Java JDK \'keytool\' is not installed or is not in the path
@@ -106,8 +96,9 @@ function gencert() {
 	DNAME="${DNAME:-CN=cas.example.org,OU=Example,OU=Org,C=US}"
 	CERT_SUBJ_ALT_NAMES="${CERT_SUBJ_ALT_NAMES:-dns:example.org,dns:localhost,ip:127.0.0.1}"
 	echo "Generating keystore for CAS with DN ${DNAME}"
-	keytool -genkeypair -alias cas -keyalg RSA -keypass changeit -storepass changeit -keystore /etc/cas/thekeystore -dname ${DNAME} -ext SAN=${CERT_SUBJ_ALT_NAMES}
-	keytool -exportcert -alias cas -storepass changeit -keystore /etc/cas/thekeystore -file /etc/cas/cas.cer
+	keytool -genkeypair -alias cas -keyalg RSA -keypass changeit -storepass changeit -keystore $dir_path/etc/cas/thekeystore -dname ${DNAME} -ext SAN=${CERT_SUBJ_ALT_NAMES}
+	# keytool -exportcert -alias cas -storepass changeit -keystore $dir_path/etc/cas/thekeystore -file $dir_path/etc/cas/cas.cer
+	keytool -importkeystore -srckeystore $dir_path/etc/cas/thekeystore -destkeystore $dir_path/etc/cas/thekeystore -deststoretype pkcs12
 }
 
 function cli() {
@@ -146,9 +137,6 @@ if [ $# -eq 0 ]; then
 fi
 
 case "$1" in
-"copy")
-    copy
-    ;;
 "clean")
 	shift
     clean "$@"
